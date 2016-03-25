@@ -27,14 +27,18 @@ namespace eval todo {
         set delim [lsearch $argvals --]
         if { $delim != -1 } {
             # labels are used
-            set labels  [lrange $argvals 0 $delim-1]
-            for {set i 1} {$i <= [llength $vars]} {incr i} {
-                set [lindex $vars $i] [lindex $argvals $delim+$i]
-            }
+            uplevel [list set labels  [lrange $argvals 0 $delim-1]]
         } else {
             # no labels; default section
-            set labels  {}
-            set newitem $args
+            uplevel [list set labels  {}]
+        }
+
+        if { [llength $vars] == 1 } {
+            uplevel [list set $vars [lrange $argvals $delim+1 end]]
+        } else {
+            for {set i 1} {$i <= [llength $vars]} {incr i} {
+                uplevel [list set [lindex $vars $i-1] [lindex $argvals $delim+$i]]
+            }
         }
 
     }
@@ -46,17 +50,7 @@ namespace eval todo {
         variable current_user
         variable userdir
 
-        set delim [lsearch $args --]
-        if { $delim != -1 } {
-            # labels are used
-            set labels  [lrange $args 0 $delim-1]
-            set newitem [lrange $args $delim+1 end]
-        } else {
-            # no labels; default section
-            set labels  {}
-            set newitem $args
-        }
-
+        setup $args newitem
         set listfile $userdir/$current_user/$listname
 
         if { [file exists $listfile] } {
@@ -75,15 +69,7 @@ namespace eval todo {
         variable current_user
         variable userdir
 
-        set delim [lsearch $args --]
-        if { $delim != -1 } {
-            # labels are used
-            set labels  [lrange $args 0 $delim-1]
-        } else {
-            # no labels; top-level section
-            set labels  {}
-        }
-        set i [lindex $args end]
+        setup $args i
         set listfile $userdir/$current_user/$listname
 
         if { [file exists $listfile] } {
@@ -103,16 +89,9 @@ namespace eval todo {
         variable current_user
         variable userdir
 
-        set delim [lsearch $args --]
-        if { $delim != -1 } {
-            # labels are used
-            set labels  [lrange $args 0 $delim-1]
-        } else {
-            # no labels; top-level section
-            set labels  {}
-        }
-        set src [expr {[lindex $args end-1] - 1}]
-        set dst [expr {[lindex $args end]   - 1}]
+        setup $args src dst
+        incr src -1; incr dst -1
+
         set listfile $userdir/$current_user/$listname
 
         if { [file exists $listfile] } {
